@@ -8,89 +8,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
+    /* Dark Theme MP3 Downloader Design System */
+    --background: 222 15% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222 20% 10%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 20% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary: Purple Glow */
+    --primary: 270 80% 60%;
+    --primary-foreground: 210 40% 98%;
+    --primary-glow: 270 90% 70%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary: Teal Accent */
+    --secondary: 180 80% 50%;
+    --secondary-foreground: 222 15% 6%;
+    --secondary-glow: 180 90% 60%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 222 15% 15%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 270 50% 20%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 222 20% 20%;
+    --input: 222 20% 15%;
+    --ring: 270 80% 60%;
+
+    --radius: 1.5rem;
+
+    /* Custom Design Tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(270 80% 60%), hsl(180 80% 50%));
+    --gradient-card: linear-gradient(145deg, hsl(222 20% 12%), hsl(222 15% 8%));
+    --gradient-hover: linear-gradient(135deg, hsl(270 90% 70%), hsl(180 90% 60%));
+    
+    --shadow-glow-primary: 0 0 40px hsl(270 80% 60% / 0.4);
+    --shadow-glow-secondary: 0 0 40px hsl(180 80% 50% / 0.4);
+    --shadow-elegant: 0 20px 60px -10px hsl(222 15% 4% / 0.6);
+    
+    --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    --transition-glow: box-shadow 0.3s ease, transform 0.3s ease;
   }
 }
 
@@ -101,5 +64,72 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Glow Button Variants */
+  .btn-glow-primary {
+    @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground;
+    @apply rounded-[var(--radius)] px-8 py-4 font-semibold;
+    @apply transition-[var(--transition-glow)] transform-gpu;
+    @apply hover:scale-105 hover:shadow-[var(--shadow-glow-primary)];
+    @apply active:scale-95;
+  }
+
+  .btn-glow-secondary {
+    @apply bg-card border-2 border-primary/30 text-foreground;
+    @apply rounded-[var(--radius)] px-6 py-3 font-medium;
+    @apply transition-[var(--transition-smooth)];
+    @apply hover:border-primary hover:shadow-[var(--shadow-glow-primary)] hover:bg-primary/10;
+  }
+
+  /* Card Variants */
+  .card-elegant {
+    @apply bg-gradient-to-br from-card to-card/80;
+    @apply border border-border/50 rounded-[var(--radius)];
+    @apply shadow-[var(--shadow-elegant)];
+    @apply backdrop-blur-sm;
+  }
+
+  .card-input {
+    @apply bg-input border border-border rounded-[var(--radius)];
+    @apply p-6 transition-[var(--transition-smooth)];
+    @apply focus-within:border-primary focus-within:shadow-[var(--shadow-glow-primary)];
+  }
+
+  /* Input Styles */
+  .input-smooth {
+    @apply bg-transparent border-0 text-lg placeholder-muted-foreground;
+    @apply focus:outline-none w-full;
+  }
+
+  /* Animations */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .animate-glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: var(--shadow-glow-primary);
+  }
+  50% {
+    box-shadow: var(--shadow-glow-secondary);
   }
 }
