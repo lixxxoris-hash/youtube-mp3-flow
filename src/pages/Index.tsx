@@ -1,18 +1,30 @@
-import { useState } from "react";
-import { Download, Youtube, Music, Video, FileAudio, Zap, Shield, Globe } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Download, Youtube, Music, Video, FileAudio, Zap, Shield, Globe, Clock, User, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [url, setUrl] = useState("");
   const [format, setFormat] = useState<"mp3" | "mp4">("mp3");
+  const [quality, setQuality] = useState<"720p" | "1080p" | "1440p" | "2160p">("1080p");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<{
+  const [videoInfo, setVideoInfo] = useState<{
     title: string;
     thumbnail: string;
-    duration: string;
-    quality: string;
-    format: "mp3" | "mp4";
+    duration: number;
+    uploader: string;
+    view_count: number;
   } | null>(null);
+  const [downloadId, setDownloadId] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{
+    status: string;
+    progress: number;
+    message: string;
+    filename?: string;
+  } | null>(null);
+  const [notificationsShown, setNotificationsShown] = useState<{
+    completed: boolean;
+    error: boolean;
+  }>({ completed: false, error: false });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,29 +39,223 @@ const Index = () => {
     }
 
     setIsLoading(true);
+    setVideoInfo(null);
+    setDownloadProgress(null);
+    setNotificationsShown({ completed: false, error: false });
     
-    // Симуляция API запроса
-    setTimeout(() => {
-      setResult({
-        title: "Example Song - Artist Name",
-        thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
-        duration: "3:32",
-        quality: format === "mp3" ? "320 kbps" : "1080p HD",
-        format: format
+    try {
+      // Получаем информацию о видео
+      const infoResponse = await fetch('http://localhost:5000/api/info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+        mode: 'cors',
+        signal: AbortSignal.timeout(15000), // 15 секунд таймаут
       });
-      setIsLoading(false);
+      
+      const infoData = await infoResponse.json();
+      
+      if (!infoData.success) {
+        throw new Error(infoData.error || 'Ошибка получения информации');
+      }
+      
+      setVideoInfo(infoData.data);
+      
+      // Начинаем скачивание
+      const downloadResponse = await fetch('http://localhost:5000/api/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url, format, quality }),
+        mode: 'cors',
+        signal: AbortSignal.timeout(15000), // 15 секунд таймаут
+      });
+      
+      const downloadData = await downloadResponse.json();
+      
+      if (!downloadData.success) {
+        throw new Error(downloadData.error || 'Ошибка начала скачивания');
+      }
+      
+      setDownloadId(downloadData.download_id);
+      
       toast({
-        title: "Готово!",
-        description: `${format.toUpperCase()} файл готов к скачиванию`,
+        title: "Скачивание начато",
+        description: `${format.toUpperCase()} файл загружается...`,
       });
-    }, 2000);
+      
+    } catch (error) {
+      let errorMessage = "Произошла ошибка";
+      
+      if (error instanceof Error) {
+        if (error.name === 'TimeoutError') {
+          errorMessage = "Превышено время ожидания. Попробуйте еще раз.";
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = "Не удается подключиться к серверу. Проверьте, что API сервер запущен.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast({
+        title: "Ошибка",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDownload = () => {
-    toast({
-      title: "Скачивание начато",
-      description: `${result?.format.toUpperCase()} файл загружается...`,
-    });
+  // Отслеживание прогресса скачивания с поддержкой отмены и экспоненциальным бэкоффом
+  const pollControllerRef = useRef<AbortController | null>(null);
+  const pollTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!downloadId) return;
+
+    let isActive = true;
+    let attempts = 0;
+    let delay = 1000; // ms
+    const maxAttempts = 20;
+
+    const poll = async () => {
+      if (!isActive) return;
+      attempts++;
+
+      // Abort previous controller
+      pollControllerRef.current?.abort();
+      const controller = new AbortController();
+      pollControllerRef.current = controller;
+
+      try {
+        const resp = await fetch(`http://localhost:5000/api/progress/${downloadId}`, {
+          signal: controller.signal,
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+
+        if (!isActive) return;
+
+        if (data.error) {
+          setDownloadProgress({ status: 'error', progress: 0, message: data.error });
+          toast({ title: 'Ошибка', description: data.error, variant: 'destructive' });
+          return;
+        }
+
+        setDownloadProgress(data);
+        attempts = 0; // reset on success
+        delay = 1000;
+
+        if (data.status === 'completed') {
+          if (!notificationsShown.completed) {
+            setNotificationsShown(prev => ({ ...prev, completed: true }));
+            toast({ title: 'Загрузка завершена', description: `Файл ${format.toUpperCase()} готов к скачиванию` });
+          }
+          return;
+        }
+
+        if (data.status === 'failed' || data.status === 'error') {
+          if (!notificationsShown.error) {
+            setNotificationsShown(prev => ({ ...prev, error: true }));
+            toast({ title: 'Ошибка скачивания', description: data.message || data.error, variant: 'destructive' });
+          }
+          return;
+        }
+
+        // schedule next poll
+        const nextDelay = Math.min(5000, delay * 1.5);
+        delay = nextDelay;
+        pollTimeoutRef.current = window.setTimeout(poll, nextDelay);
+
+      } catch (err: any) {
+        if (!isActive) return;
+        console.error('Poll error', err);
+        if (err.name === 'AbortError') return; // cancelled
+
+        attempts++;
+        if (attempts >= maxAttempts) {
+          setDownloadProgress({ status: 'error', progress: downloadProgress?.progress ?? 0, message: 'Не удалось получить статус загрузки. Попробуйте снова.' });
+          toast({ title: 'Ошибка', description: 'Не удалось получить статус загрузки после нескольких попыток.', variant: 'destructive' });
+          return;
+        }
+
+        // exponential backoff retry
+        delay = Math.min(10000, delay * 1.5);
+        pollTimeoutRef.current = window.setTimeout(poll, delay);
+      }
+    };
+
+    poll();
+
+    return () => {
+      isActive = false;
+      pollControllerRef.current?.abort();
+      if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+    };
+  }, [downloadId, format, notificationsShown]);
+
+  const handleDownload = async () => {
+    if (!downloadId) return;
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/download/${downloadId}`, {
+        signal: AbortSignal.timeout(15000), // 15 секунд таймаут
+      });
+      
+      if (!response.ok) {
+        // Если это JSON с ошибкой, прочитаем его
+        if (response.headers.get('content-type')?.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Ошибка получения файла');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Получаем имя файла из заголовка
+      const contentDisposition = response.headers.get('content-disposition');
+      const filenameMatch = contentDisposition?.match(/filename=([^;]+)/);
+      const filename = filenameMatch ? filenameMatch[1].replace(/["']/g, '') : `download.${format}`;
+      
+      // Получаем блоб
+      const blob = await response.blob();
+      
+      // Создаем ссылку для скачивания
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Очищаем
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Скачивание завершено",
+        description: `Файл ${filename} сохранен`,
+      });
+    } catch (error) {
+      let errorMessage = "Ошибка при скачивании файла";
+      
+      if (error instanceof Error) {
+        if (error.name === 'TimeoutError') {
+          errorMessage = "Превышено время ожидания. Попробуйте еще раз.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast({
+        title: "Ошибка",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const scrollToFeatures = () => {
@@ -88,7 +294,13 @@ const Index = () => {
               <div className="flex bg-input rounded-[var(--radius)] p-1">
                 <button
                   type="button"
-                  onClick={() => setFormat("mp3")}
+                  onClick={() => {
+                    setFormat("mp3");
+                    // Сбрасываем состояние при смене формата
+                    setDownloadId(null);
+                    setDownloadProgress(null);
+                    setNotificationsShown({ completed: false, error: false });
+                  }}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-[calc(var(--radius)-4px)] transition-all ${
                     format === "mp3" 
                       ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow-primary)]" 
@@ -100,7 +312,13 @@ const Index = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormat("mp4")}
+                  onClick={() => {
+                    setFormat("mp4");
+                    // Сбрасываем состояние при смене формата
+                    setDownloadId(null);
+                    setDownloadProgress(null);
+                    setNotificationsShown({ completed: false, error: false });
+                  }}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-[calc(var(--radius)-4px)] transition-all ${
                     format === "mp4" 
                       ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow-primary)]" 
@@ -113,6 +331,61 @@ const Index = () => {
               </div>
             </div>
           </div>
+
+          {/* Quality Selector - только для MP4 */}
+          {format === "mp4" && (
+            <div className="card-elegant p-4 animate-fade-in-up">
+              <div className="flex items-center justify-center space-x-4">
+                <span className="text-sm text-muted-foreground">Выберите качество:</span>
+                <div className="flex bg-input rounded-[var(--radius)] p-1">
+                  <button
+                    type="button"
+                    onClick={() => setQuality("720p")}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-[calc(var(--radius)-4px)] transition-all ${
+                      quality === "720p" 
+                        ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow-primary)]" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span>720p</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuality("1080p")}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-[calc(var(--radius)-4px)] transition-all ${
+                      quality === "1080p" 
+                        ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow-primary)]" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span>1080p</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuality("1440p")}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-[calc(var(--radius)-4px)] transition-all ${
+                      quality === "1440p" 
+                        ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow-primary)]" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span>1440p</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuality("2160p")}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-[calc(var(--radius)-4px)] transition-all ${
+                      quality === "2160p" 
+                        ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow-primary)]" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span>2160p</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Input Form */}
           <form onSubmit={handleSubmit} className="card-input">
@@ -140,38 +413,100 @@ const Index = () => {
             </div>
           </form>
 
-          {/* Result Card */}
-          {result && (
+          {/* Video Info Card */}
+          {videoInfo && (
             <div className="card-elegant p-6 animate-fade-in-up">
               <div className="flex items-center space-x-4">
                 <img
-                  src={result.thumbnail}
-                  alt={result.title}
+                  src={videoInfo.thumbnail}
+                  alt={videoInfo.title}
                   className="w-20 h-20 rounded-lg object-cover"
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">{result.title}</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Длительность: {result.duration} • Качество: {result.quality}
-                  </p>
+                  <h3 className="font-semibold text-lg mb-1">{videoInfo.title}</h3>
+                  <div className="flex items-center space-x-4 text-muted-foreground text-sm mb-2">
+                    <div className="flex items-center space-x-1">
+                      <User className="w-4 h-4" />
+                      <span>{videoInfo.uploader}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{Math.floor(videoInfo.duration / 60)}:{(videoInfo.duration % 60).toString().padStart(2, '0')}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Eye className="w-4 h-4" />
+                      <span>{videoInfo.view_count.toLocaleString()} просмотров</span>
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-2 mt-2">
-                    {result.format === "mp3" ? (
+                    {format === "mp3" ? (
                       <FileAudio className="w-4 h-4 text-primary" />
                     ) : (
                       <Video className="w-4 h-4 text-primary" />
                     )}
                     <span className="text-xs text-primary font-medium">
-                      {result.format.toUpperCase()} формат
+                      {format.toUpperCase()} {format === "mp4" ? quality : "формат"}
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={handleDownload}
-                  className="btn-glow-secondary flex items-center space-x-2"
-                >
-                  <Download className="w-5 h-5" />
-                  <span>Скачать {result.format.toUpperCase()}</span>
-                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Download Progress */}
+          {downloadProgress && (
+            <div className="card-elegant p-6 animate-fade-in-up">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg">Статус скачивания</h3>
+                  <div className="flex items-center space-x-2">
+                    {downloadProgress.status === 'downloading' && (
+                      <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                    )}
+                    {downloadProgress.status === 'completed' && (
+                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs">OK</span>
+                      </div>
+                    )}
+                    {downloadProgress.status === 'error' && (
+                      <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs">!</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">{downloadProgress.message}</p>
+                    {downloadProgress.status === 'downloading' && (
+                      <span className="text-sm text-primary font-medium">
+                        {downloadProgress.progress}%
+                      </span>
+                    )}
+                  </div>
+                  
+                  {downloadProgress.status === 'downloading' && (
+                    <div className="w-full bg-muted/50 rounded-full h-3 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-primary via-secondary to-primary h-3 rounded-full transition-all duration-500 ease-out relative"
+                        style={{ width: `${downloadProgress.progress}%` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {downloadProgress.status === 'completed' && (
+                  <button
+                    onClick={handleDownload}
+                    className="btn-glow-secondary flex items-center space-x-2 w-full justify-center"
+                  >
+                    <Download className="w-5 h-5" />
+                    <span>Скачать {format.toUpperCase()}</span>
+                  </button>
+                )}
               </div>
             </div>
           )}

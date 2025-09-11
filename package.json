@@ -1,7 +1,8 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "youtube-mp3-flow",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "YouTube MP3/MP4 downloader with web interface",
   "type": "module",
   "scripts": {
     "dev": "vite",
