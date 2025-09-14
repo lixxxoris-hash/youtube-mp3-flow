@@ -288,9 +288,9 @@ const Index = () => {
           </div>
 
           {/* Format and Quality Selector Container */}
-          <div className="flex items-start space-x-4">
+          <div className="relative">
             {/* Format Selector */}
-            <div className="card-elegant p-6 flex-1">
+            <div className="card-elegant p-6">
               <div className="flex items-center justify-center space-x-6">
                 <span className="text-lg font-medium text-muted-foreground">Выберите формат:</span>
                 <div className="flex bg-input/50 rounded-[var(--radius)] p-1">
@@ -336,7 +336,7 @@ const Index = () => {
 
             {/* Quality Selector - только для MP4 */}
             {format === "mp4" && (
-              <div className="card-elegant p-6 flex-1 animate-slide-from-right">
+              <div className="absolute top-0 left-full ml-4 card-elegant p-6 animate-slide-from-right whitespace-nowrap">
                 <div className="flex items-center justify-center space-x-6">
                   <span className="text-lg font-medium text-muted-foreground">Выберите качество:</span>
                   <div className="flex bg-input/50 rounded-[var(--radius)] p-1">
