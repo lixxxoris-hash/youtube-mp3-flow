@@ -76,32 +76,33 @@ All colors MUST be HSL.
 @layer components {
   /* Glow Button Variants */
   .btn-glow-primary {
-    @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground;
+    @apply bg-gradient-to-r from-primary/80 to-secondary/80 text-primary-foreground;
     @apply rounded-[var(--radius)] px-8 py-4 font-semibold;
     @apply transition-[var(--transition-glow)] transform-gpu;
-    @apply hover:scale-105 hover:shadow-[var(--shadow-glow-primary)];
-    @apply active:scale-95;
+    @apply hover:scale-105 hover:shadow-[var(--shadow-glow-primary)] hover:from-primary hover:to-secondary;
+    @apply active:scale-95 backdrop-blur-sm;
   }
 
   .btn-glow-secondary {
-    @apply bg-card border-2 border-primary/30 text-foreground;
+    @apply bg-card/30 border-2 border-primary/30 text-foreground;
     @apply rounded-[var(--radius)] px-6 py-3 font-medium;
-    @apply transition-[var(--transition-smooth)];
+    @apply transition-[var(--transition-smooth)] backdrop-blur-sm;
     @apply hover:border-primary hover:shadow-[var(--shadow-glow-primary)] hover:bg-primary/10;
   }
 
   /* Card Variants */
   .card-elegant {
-    @apply bg-gradient-to-br from-card to-card/80;
-    @apply border border-border/50 rounded-[var(--radius)];
+    @apply bg-gradient-to-br from-card/30 to-card/20;
+    @apply border border-border/30 rounded-[var(--radius)];
     @apply shadow-[var(--shadow-elegant)];
-    @apply backdrop-blur-sm;
+    @apply backdrop-blur-md;
   }
 
   .card-input {
-    @apply bg-input border border-border rounded-[var(--radius)];
+    @apply bg-input/30 border border-border/30 rounded-[var(--radius)];
     @apply p-6 transition-[var(--transition-smooth)];
     @apply focus-within:border-primary focus-within:shadow-[var(--shadow-glow-primary)];
+    @apply backdrop-blur-md;
   }
 
   /* Input Styles */
@@ -117,6 +118,10 @@ All colors MUST be HSL.
 
   .animate-glow-pulse {
     animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
   }
 
   /* Animated Background */
@@ -144,6 +149,17 @@ All colors MUST be HSL.
   }
   50% {
     box-shadow: var(--shadow-glow-secondary);
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
