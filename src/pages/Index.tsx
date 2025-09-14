@@ -287,105 +287,108 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Format Selector */}
-          <div className="card-elegant p-6">
-            <div className="flex items-center justify-center space-x-6">
-              <span className="text-lg font-medium text-muted-foreground">Выберите формат:</span>
-              <div className="flex bg-input/50 rounded-[var(--radius)] p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormat("mp3");
-                    // Сбрасываем состояние при смене формата
-                    setDownloadId(null);
-                    setDownloadProgress(null);
-                    setNotificationsShown({ completed: false, error: false });
-                  }}
-                  className={`flex items-center space-x-3 px-6 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
-                    format === "mp3" 
-                      ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-input/30"
-                  }`}
-                >
-                  <FileAudio className="w-5 h-5" />
-                  <span>MP3</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormat("mp4");
-                    // Сбрасываем состояние при смене формата
-                    setDownloadId(null);
-                    setDownloadProgress(null);
-                    setNotificationsShown({ completed: false, error: false });
-                  }}
-                  className={`flex items-center space-x-3 px-6 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
-                    format === "mp4" 
-                      ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-input/30"
-                  }`}
-                >
-                  <Video className="w-5 h-5" />
-                  <span>MP4</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Quality Selector - только для MP4 */}
-          {format === "mp4" && (
-            <div className="card-elegant p-6 animate-slide-down">
+          {/* Format and Quality Selector Container */}
+          <div className="flex items-start space-x-4">
+            {/* Format Selector */}
+            <div className="card-elegant p-6 flex-1">
               <div className="flex items-center justify-center space-x-6">
-                <span className="text-lg font-medium text-muted-foreground">Выберите качество:</span>
+                <span className="text-lg font-medium text-muted-foreground">Выберите формат:</span>
                 <div className="flex bg-input/50 rounded-[var(--radius)] p-1">
                   <button
                     type="button"
-                    onClick={() => setQuality("720p")}
-                    className={`flex items-center space-x-2 px-5 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
-                      quality === "720p" 
+                    onClick={() => {
+                      setFormat("mp3");
+                      // Сбрасываем состояние при смене формата
+                      setDownloadId(null);
+                      setDownloadProgress(null);
+                      setNotificationsShown({ completed: false, error: false });
+                    }}
+                    className={`flex items-center space-x-3 px-6 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
+                      format === "mp3" 
                         ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-input/30"
                     }`}
                   >
-                    <span>720p</span>
+                    <FileAudio className="w-5 h-5" />
+                    <span>MP3</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setQuality("1080p")}
-                    className={`flex items-center space-x-2 px-5 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
-                      quality === "1080p" 
+                    onClick={() => {
+                      setFormat("mp4");
+                      // Сбрасываем состояние при смене формата
+                      setDownloadId(null);
+                      setDownloadProgress(null);
+                      setNotificationsShown({ completed: false, error: false });
+                    }}
+                    className={`flex items-center space-x-3 px-6 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
+                      format === "mp4" 
                         ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-input/30"
                     }`}
                   >
-                    <span>1080p</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQuality("1440p")}
-                    className={`flex items-center space-x-2 px-5 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
-                      quality === "1440p" 
-                        ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-input/30"
-                    }`}
-                  >
-                    <span>1440p</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQuality("2160p")}
-                    className={`flex items-center space-x-2 px-5 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
-                      quality === "2160p" 
-                        ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-input/30"
-                    }`}
-                  >
-                    <span>2160p</span>
+                    <Video className="w-5 h-5" />
+                    <span>MP4</span>
                   </button>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Quality Selector - только для MP4 */}
+            {format === "mp4" && (
+              <div className="card-elegant p-6 flex-1 animate-slide-from-right">
+                <div className="flex items-center justify-center space-x-6">
+                  <span className="text-lg font-medium text-muted-foreground">Выберите качество:</span>
+                  <div className="flex bg-input/50 rounded-[var(--radius)] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setQuality("720p")}
+                      className={`flex items-center space-x-2 px-5 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
+                        quality === "720p" 
+                          ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-input/30"
+                      }`}
+                    >
+                      <span>720p</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuality("1080p")}
+                      className={`flex items-center space-x-2 px-5 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
+                        quality === "1080p" 
+                          ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-input/30"
+                      }`}
+                    >
+                      <span>1080p</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuality("1440p")}
+                      className={`flex items-center space-x-2 px-5 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
+                        quality === "1440p" 
+                          ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-input/30"
+                      }`}
+                    >
+                      <span>1440p</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuality("2160p")}
+                      className={`flex items-center space-x-2 px-5 py-3 rounded-[calc(var(--radius)-4px)] transition-all text-lg font-semibold ${
+                        quality === "2160p" 
+                          ? "bg-primary/80 text-primary-foreground shadow-[var(--shadow-glow-primary)] backdrop-blur-sm" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-input/30"
+                      }`}
+                    >
+                      <span>2160p</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Input Form */}
           <form onSubmit={handleSubmit} className="card-input">
