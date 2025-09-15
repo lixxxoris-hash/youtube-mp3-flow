@@ -7,6 +7,8 @@ const Index = () => {
   const [format, setFormat] = useState<"mp3" | "mp4">("mp3");
   const [quality, setQuality] = useState<"720p" | "1080p" | "1440p" | "2160p">("1080p");
   const [isLoading, setIsLoading] = useState(false);
+  const [isQualityDisappearing, setIsQualityDisappearing] = useState(false);
+  const [showQuality, setShowQuality] = useState(false);
   const [videoInfo, setVideoInfo] = useState<{
     title: string;
     thumbnail: string;
@@ -297,6 +299,13 @@ const Index = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      if (format === "mp4") {
+                        setIsQualityDisappearing(true);
+                        setTimeout(() => {
+                          setShowQuality(false);
+                          setIsQualityDisappearing(false);
+                        }, 400);
+                      }
                       setFormat("mp3");
                       // Сбрасываем состояние при смене формата
                       setDownloadId(null);
@@ -316,6 +325,7 @@ const Index = () => {
                     type="button"
                     onClick={() => {
                       setFormat("mp4");
+                      setShowQuality(true);
                       // Сбрасываем состояние при смене формата
                       setDownloadId(null);
                       setDownloadProgress(null);
@@ -335,8 +345,8 @@ const Index = () => {
             </div>
 
             {/* Quality Selector - только для MP4 */}
-            {format === "mp4" && (
-              <div className="card-elegant p-6 flex-1 animate-slide-from-right">
+            {(showQuality || isQualityDisappearing) && (
+              <div className={`card-elegant p-6 flex-1 ${isQualityDisappearing ? 'animate-quality-disappear' : 'animate-slide-from-right'}`}>
                 <div className="flex items-center justify-center space-x-6">
                   <span className="text-lg font-medium text-muted-foreground">Выберите качество:</span>
                   <div className="flex bg-input/50 rounded-[var(--radius)] p-1">

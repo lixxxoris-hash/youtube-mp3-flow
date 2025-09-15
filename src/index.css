@@ -129,7 +129,11 @@ All colors MUST be HSL.
   }
 
   .animate-slide-out-right {
-    animation: slideOutRight 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    animation: slideOutRight 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .animate-quality-disappear {
+    animation: qualityDisappear 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
   }
 
   /* Animated Background */
@@ -190,6 +194,19 @@ All colors MUST be HSL.
   100% {
     opacity: 0;
     transform: translateX(30px) scale(0.96);
+  }
+}
+
+@keyframes qualityDisappear {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    max-width: 500px;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(30px) scale(0.95);
+    max-width: 0;
   }
 }
 
