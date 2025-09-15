@@ -279,7 +279,7 @@ const Index = () => {
                 <Globe className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                You2All
+                You2Fetch
               </h1>
             </div>
             <p className="text-muted-foreground text-lg">
