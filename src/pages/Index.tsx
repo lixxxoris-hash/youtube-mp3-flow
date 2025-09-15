@@ -7,8 +7,6 @@ const Index = () => {
   const [format, setFormat] = useState<"mp3" | "mp4">("mp3");
   const [quality, setQuality] = useState<"720p" | "1080p" | "1440p" | "2160p">("1080p");
   const [isLoading, setIsLoading] = useState(false);
-  const [showQuality, setShowQuality] = useState(false);
-  const [isQualityAnimating, setIsQualityAnimating] = useState(false);
   const [videoInfo, setVideoInfo] = useState<{
     title: string;
     thumbnail: string;
@@ -27,17 +25,6 @@ const Index = () => {
     completed: boolean;
     error: boolean;
   }>({ completed: false, error: false });
-
-  // Управление анимацией блока качества
-  useEffect(() => {
-    if (format === "mp4") {
-      setShowQuality(true);
-      setTimeout(() => setIsQualityAnimating(true), 10);
-    } else {
-      setIsQualityAnimating(false);
-      setTimeout(() => setShowQuality(false), 600);
-    }
-  }, [format]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,9 +288,9 @@ const Index = () => {
           </div>
 
           {/* Format and Quality Selector Container */}
-          <div className={`transition-all duration-700 ease-out ${format === "mp4" ? "flex items-start space-x-4" : "flex justify-center"}`}>
+          <div className="flex items-start space-x-4">
             {/* Format Selector */}
-            <div className={`card-elegant p-6 transition-all duration-700 ease-out ${format === "mp4" ? "flex-1" : "w-auto"}`}>
+            <div className="card-elegant p-6 flex-1">
               <div className="flex items-center justify-center space-x-6">
                 <span className="text-lg font-medium text-muted-foreground">Выберите формат:</span>
                 <div className="flex bg-input/50 rounded-[var(--radius)] p-1">
@@ -348,12 +335,8 @@ const Index = () => {
             </div>
 
             {/* Quality Selector - только для MP4 */}
-            {showQuality && (
-              <div className={`card-elegant p-6 flex-1 transition-all duration-700 ease-out ${
-                isQualityAnimating 
-                  ? "opacity-100 transform translate-x-0 scale-100 blur-0" 
-                  : "opacity-0 transform translate-x-8 scale-95 blur-sm"
-              }`}>
+            {format === "mp4" && (
+              <div className="card-elegant p-6 flex-1 animate-slide-from-right">
                 <div className="flex items-center justify-center space-x-6">
                   <span className="text-lg font-medium text-muted-foreground">Выберите качество:</span>
                   <div className="flex bg-input/50 rounded-[var(--radius)] p-1">
